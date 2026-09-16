@@ -5,10 +5,10 @@ Every checkpoint must be registered before it can be compiled with CAESAR.
 
 | Registration | Model | Checkpoint | Description |
 | --- | --- | --- | --- |
-| 1 | CAESAR v1 (`caesar_v1`) | `caesar_v.pt` | Original CAESAR v foundation model. |
-| 2 | CAESAR v2 (`caesar_v2`) | `model_bs64_ep100k.pt` | Newer foundation model with optimizations; default. |
-| 3 | `eelsM1` | `eelsM1.pt` | EELS checkpoint; detailed training provenance is not recorded here. |
-| 4 | `microscopy` | `microscopy.pt` | Microscopy checkpoint; detailed training provenance is not recorded here. |
+| 1 | CAESAR v1 (`caesar_v1`) | `caesar_v.pt` | Foundation model, original CAESAR v1 release; trained for scientific data with 3D–5D inputs. |
+| 2 | CAESAR v2 (`caesar_v2`) | `model_bs64_ep100k.pt` | Foundation model, optimized CAESAR v2 release; trained for scientific data with 3D–5D inputs. |
+| 3 | `eelsM1` | `eelsM1.pt` | Domain fine-tune of the CAESAR foundation model for EELS; trained and tested on one EELS dataset; supports 3D–5D inputs. |
+| 4 | `microscopy` | `microscopy.pt` | Domain-specific microscopy model; trained and tested across four microscopy datasets; supports 3D–5D inputs. |
 
 ## Registering a checkpoint
 
