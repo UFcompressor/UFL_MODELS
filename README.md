@@ -11,6 +11,7 @@ Every checkpoint must be registered before it can be compiled with CAESAR.
 | 2 | CAESAR v2 (caesar_v2) | Active (default) | model_bs64_ep100k.pt | 3D–5D | Foundation model, optimized CAESAR v2 release; trained for scientific data with 3D–5D inputs. |
 | 3 | eelsM1 (eelsM1) | Active | eelsM1.pt | 3D–5D | Domain fine-tune of the CAESAR foundation model for EELS; trained and tested on one EELS dataset, with 3D–5D inputs. |
 | 4 | microscopy (microscopy) | Active | microscopy.pt | 3D–5D | Domain-specific microscopy model; trained and tested across four microscopy datasets, with 3D–5D inputs. |
+| 5 | Xcompact3d latent 16x16 (Xcompact3d_latent_16_16) | Active | Xcompact3d_latent_16_16.pt | 3D–5D | Xcompact3d checkpoint; document training data and intended use |
 
 <!-- END GENERATED MODEL LIST -->
 
