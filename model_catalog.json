@@ -13,7 +13,9 @@
       "max_dims": 5,
       "architecture": "caesar-bcrn-v1",
       "display_name": "CAESAR v1",
-      "registration_id": 1
+      "registration_id": 1,
+      "owner": "E53klasky",
+      "owner_id": 173562962
     },
     {
       "name": "caesar_v2",
@@ -26,7 +28,9 @@
       "max_dims": 5,
       "architecture": "caesar-bcrn-v1",
       "display_name": "CAESAR v2",
-      "registration_id": 2
+      "registration_id": 2,
+      "owner": "E53klasky",
+      "owner_id": 173562962
     },
     {
       "name": "eelsM1",
@@ -39,7 +43,9 @@
       "max_dims": 5,
       "architecture": "caesar-bcrn-v1",
       "display_name": "eelsM1",
-      "registration_id": 3
+      "registration_id": 3,
+      "owner": "E53klasky",
+      "owner_id": 173562962
     },
     {
       "name": "microscopy",
@@ -52,7 +58,9 @@
       "max_dims": 5,
       "architecture": "caesar-bcrn-v1",
       "display_name": "microscopy",
-      "registration_id": 4
+      "registration_id": 4,
+      "owner": "E53klasky",
+      "owner_id": 173562962
     },
     {
       "registration_id": 5,
@@ -65,7 +73,9 @@
       "min_dims": 3,
       "max_dims": 5,
       "architecture": "caesar-bcrn-v1",
-      "url": "https://raw.githubusercontent.com/UFcompressor/UFL_MODELS/cb9997bf0bd02bd6bd1729d306d0ade72e75e520/Xcompact3d_latent_16_16.pt"
+      "url": "https://raw.githubusercontent.com/UFcompressor/UFL_MODELS/cb9997bf0bd02bd6bd1729d306d0ade72e75e520/Xcompact3d_latent_16_16.pt",
+      "owner": "E53klasky",
+      "owner_id": 173562962
     }
   ]
 }
