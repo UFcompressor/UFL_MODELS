@@ -1,0 +1,2 @@
+# Enforce required code-owner review in repository rules; this file alone does not block pushes.
+* @E53klasky
