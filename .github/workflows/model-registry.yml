@@ -47,17 +47,18 @@ jobs:
           AUTHOR_TYPE: ${{ github.event.pull_request.user.type }}
           REPOSITORY: ${{ github.repository }}
         run: |
+          status=1
           if [[ "$AUTHOR_TYPE" != User ]]; then
             echo "Rejected: requests must be opened by a GitHub user" > result.txt
           else
             python3 test/check_registration.py --base HEAD --head "$HEAD_SHA" \
               --author "$AUTHOR" --author-id "$AUTHOR_ID" --repository "$REPOSITORY" \
-              > result.txt 2>&1 || true
+              > result.txt 2>&1 && status=0 || status=$?
           fi
           cat result.txt
           delimiter="RESULT_$(openssl rand -hex 16)"
           { echo "result<<$delimiter"; cat result.txt; echo "$delimiter"; } >> "$GITHUB_OUTPUT"
-          grep -q '^Accepted: ' result.txt
+          exit "$status"
 
   merge:
     needs: check

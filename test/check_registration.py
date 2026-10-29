@@ -282,6 +282,15 @@ def read_checkpoint(data):
             if type(name) is not str or not isinstance(tensor, _Tensor):
                 raise ValueError("Checkpoint must map parameter names to tensors")
             key, numel = tensor.storage
+            if (
+                type(tensor.offset) is not int
+                or tensor.offset < 0
+                or numel < 0
+                or len(tensor.shape) != len(tensor.stride)
+                or any(type(size) is not int or size < 0 for size in tensor.shape)
+                or any(type(step) is not int or step < 0 for step in tensor.stride)
+            ):
+                raise ValueError(f"{name}: invalid tensor layout")
             if key not in checked:
                 values = array.array("f")
                 values.frombytes(archive.read(f"{root}data/{key}"))
@@ -352,9 +361,14 @@ def check_pull_request(repo, base, head, author, author_id, repository):
         text=True,
     )
     if merged.returncode:
+        if merged.returncode == 1:
+            raise ValueError(
+                "The pull request conflicts with the current database; "
+                "rerun register_model.py to rebuild it"
+            )
         raise ValueError(
-            "The pull request conflicts with the current database; "
-            "rerun register_model.py to rebuild it"
+            "git merge-tree failed (Git 2.38 or newer is required): "
+            + merged.stderr.strip()
         )
     tree = merged.stdout.split()[0]
     changes = {}
