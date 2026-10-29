@@ -11,9 +11,14 @@ on:
 
 permissions: {}
 
+# One run per pull request; a new push supersedes the old check. Do not queue
+# all requests in one group: GitHub keeps one pending run per group and cancels
+# the rest. Requests checked at the same time merge independently, and GitHub
+# refuses a merge that conflicts, as any two registrations or retirements do
+# (both append to the same catalog and README lines).
 concurrency:
-  group: model-registration-${{ github.event.pull_request.base.ref }}
-  cancel-in-progress: false
+  group: model-registration-${{ github.event.pull_request.number }}
+  cancel-in-progress: true
 
 jobs:
   check:
