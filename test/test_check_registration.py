@@ -40,10 +40,17 @@ class PullRequestTests(unittest.TestCase):
         reference = next(
             m for m in reference["models"] if m["name"] == reference["default_model"]
         )["filename"]
-        for name in ("model_catalog.json", "README.md", "registry_policy.json", reference):
+        for name in (
+            "model_catalog.json",
+            "README.md",
+            "registry_policy.json",
+            reference,
+        ):
             shutil.copy(ROOT / name, self.repo / name)
         (self.repo / "test").mkdir()
-        shutil.copy(Path(__file__).with_name("check_registration.py"), self.repo / "test")
+        shutil.copy(
+            Path(__file__).with_name("check_registration.py"), self.repo / "test"
+        )
         self.reference = (self.repo / reference).read_bytes()
         self.git("init", "--quiet", "-b", "main")
         self.commit("Database")
@@ -53,7 +60,16 @@ class PullRequestTests(unittest.TestCase):
 
     def git(self, *args):
         return subprocess.run(
-            ["git", "-C", str(self.repo), "-c", "user.name=t", "-c", "user.email=t@t", *args],
+            [
+                "git",
+                "-C",
+                str(self.repo),
+                "-c",
+                "user.name=t",
+                "-c",
+                "user.email=t@t",
+                *args,
+            ],
             check=True,
             capture_output=True,
             text=True,
@@ -68,7 +84,9 @@ class PullRequestTests(unittest.TestCase):
         return json.loads((self.repo / "model_catalog.json").read_text())
 
     def write(self, catalog):
-        (self.repo / "model_catalog.json").write_text(json.dumps(catalog, indent=2) + "\n")
+        (self.repo / "model_catalog.json").write_text(
+            json.dumps(catalog, indent=2) + "\n"
+        )
         readme = self.repo / "README.md"
         readme.write_text(checker.render_readme(catalog, readme.read_text()))
 
@@ -120,18 +138,28 @@ class PullRequestTests(unittest.TestCase):
 
     def test_owner_comes_from_the_pull_request_author(self):
         head = self.request("a", owner="E53klasky", owner_id=173562962)
-        with self.assertRaisesRegex(ValueError, "Owner must be the pull request author"):
+        with self.assertRaisesRegex(
+            ValueError, "Owner must be the pull request author"
+        ):
             self.check(head)
-        with self.assertRaisesRegex(ValueError, "Owner must be the pull request author"):
+        with self.assertRaisesRegex(
+            ValueError, "Owner must be the pull request author"
+        ):
             self.check(self.request("b", name="other"), author=BOB)
 
     def test_registration_number_and_fields_cannot_be_chosen(self):
         for branch, change, message in (
-            ("number", dict(registration_id=99, id="ufl:99@sha256:" + "0" * 64), "SHA|number"),
+            (
+                "number",
+                dict(registration_id=99, id="ufl:99@sha256:" + "0" * 64),
+                "SHA|number",
+            ),
             ("extra", dict(registration_issue=1), "unexpected catalog fields"),
             ("arch", dict(architecture="other"), "architecture"),
         ):
-            with self.subTest(branch=branch), self.assertRaisesRegex(ValueError, message):
+            with self.subTest(branch=branch), self.assertRaisesRegex(
+                ValueError, message
+            ):
                 self.check(self.request(branch, **change))
 
     def test_files_that_are_not_caesar_checkpoints_are_rejected(self):
@@ -151,12 +179,17 @@ class PullRequestTests(unittest.TestCase):
         (self.repo / "test" / "check_registration.py").write_text("print('Accepted')\n")
         head = self.commit("Also change the checks")
         self.git("switch", "--quiet", "main")
-        with self.assertRaisesRegex(ValueError, "also changed: \\['test/check_registration.py'\\]"):
+        with self.assertRaisesRegex(
+            ValueError, "also changed: \\['test/check_registration.py'\\]"
+        ):
             self.check(head)
 
     def test_url_must_name_the_commit_that_adds_the_checkpoint(self):
         base = self.git("rev-parse", "main")
-        head = self.request("a", url=f"https://raw.githubusercontent.com/{REPOSITORY}/{base}/alice_model.pt")
+        head = self.request(
+            "a",
+            url=f"https://raw.githubusercontent.com/{REPOSITORY}/{base}/alice_model.pt",
+        )
         with self.assertRaisesRegex(ValueError, "commit that adds the checkpoint"):
             self.check(head)
         head = self.request("b", name="b", url="https://example.com/b.pt")
@@ -175,7 +208,9 @@ class PullRequestTests(unittest.TestCase):
     def test_duplicate_name_or_checkpoint_is_rejected(self):
         self.merge(self.request("a"))
         with self.assertRaisesRegex(ValueError, "Duplicate name"):
-            self.check(self.request("b", data=variant(self.reference, b"\x00\x00\x00\x40")))
+            self.check(
+                self.request("b", data=variant(self.reference, b"\x00\x00\x00\x40"))
+            )
         with self.assertRaisesRegex(ValueError, "Duplicate sha256"):
             self.check(self.request("c", name="copy"))
 
@@ -201,7 +236,9 @@ class PullRequestTests(unittest.TestCase):
         catalog["default_model"] = "caesar_v2"
         self.git("switch", "--quiet", "-c", "no-default", "main")
         self.write(dict(catalog, default_model="caesar_v1"))
-        (self.repo / "model_catalog.json").write_text(json.dumps(catalog, indent=2) + "\n")
+        (self.repo / "model_catalog.json").write_text(
+            json.dumps(catalog, indent=2) + "\n"
+        )
         head = self.commit("Retire the default by hand")
         self.git("switch", "--quiet", "main")
         with self.assertRaisesRegex(ValueError, "Default must be an active model"):
@@ -211,7 +248,9 @@ class PullRequestTests(unittest.TestCase):
         self.merge(self.request("a"))
         self.merge(self.retirement("retire", "alice_model"))
         with self.assertRaisesRegex(ValueError, "Duplicate name"):
-            self.check(self.request("again", data=variant(self.reference, b"\x00\x00\x00\x40")))
+            self.check(
+                self.request("again", data=variant(self.reference, b"\x00\x00\x00\x40"))
+            )
 
     def test_requests_built_on_an_old_database_conflict(self):
         late = self.request("late", name="bob_model", author=BOB)

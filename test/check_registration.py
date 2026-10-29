@@ -175,7 +175,10 @@ def register(
             raise ValueError(f"Invalid {field}")
     result = copy.deepcopy(catalog)
     number = 1 + max(
-        (m["registration_id"] for m in result["models"] + result.get("retired_models", [])),
+        (
+            m["registration_id"]
+            for m in result["models"] + result.get("retired_models", [])
+        ),
         default=0,
     )
     result["models"].append(
@@ -289,9 +292,14 @@ def read_checkpoint(data):
                 if not all(map(math.isfinite, values)):
                     raise ValueError(f"{name} contains NaN or infinite values")
                 checked.add(key)
-            if 0 not in tensor.shape and tensor.offset + sum(
-                (size - 1) * step for size, step in zip(tensor.shape, tensor.stride)
-            ) >= numel:
+            if (
+                0 not in tensor.shape
+                and tensor.offset
+                + sum(
+                    (size - 1) * step for size, step in zip(tensor.shape, tensor.stride)
+                )
+                >= numel
+            ):
                 raise ValueError(f"{name} extends past its storage")
             # DataParallel and torch.compile prefixes; CAESAR strips both on load
             while name.startswith(("module.", "_orig_mod.")):
@@ -316,7 +324,9 @@ def check_checkpoint(data, reference):
     shapes, expected = read_checkpoint(data), read_checkpoint(reference)
     missing = sorted(expected.keys() - shapes.keys())
     extra = sorted(shapes.keys() - expected.keys())
-    wrong = sorted(k for k in expected.keys() & shapes.keys() if shapes[k] != expected[k])
+    wrong = sorted(
+        k for k in expected.keys() & shapes.keys() if shapes[k] != expected[k]
+    )
     if missing or extra or wrong:
         raise ValueError(
             f"Checkpoint does not match the {ARCHITECTURE} network: "
@@ -348,7 +358,9 @@ def check_pull_request(repo, base, head, author, author_id, repository):
         )
     tree = merged.stdout.split()[0]
     changes = {}
-    for line in git("diff-tree", "-r", "--no-renames", "--name-status", base, tree).splitlines():
+    for line in git(
+        "diff-tree", "-r", "--no-renames", "--name-status", base, tree
+    ).splitlines():
         status, path = line.split("\t", 1)
         changes[path] = status
     old = json.loads(git("show", f"{base}:model_catalog.json"))
@@ -380,7 +392,10 @@ def check_pull_request(repo, base, head, author, author_id, repository):
             )
         expected = register(
             old,
-            **{k: model[k] for k in MODEL_KEYS - {"registration_id", "id", "architecture"}},
+            **{
+                k: model[k]
+                for k in MODEL_KEYS - {"registration_id", "id", "architecture"}
+            },
         )
         if new != expected:
             raise ValueError(
@@ -394,7 +409,9 @@ def check_pull_request(repo, base, head, author, author_id, repository):
             ["git", "-C", str(repo), "merge-base", "--is-ancestor", commit[1], head],
             capture_output=True,
         ).returncode:
-            raise ValueError("The checkpoint URL must name a commit in this pull request")
+            raise ValueError(
+                "The checkpoint URL must name a commit in this pull request"
+            )
         data = git("show", f"{tree}:{model['filename']}", text=False)
         pinned = subprocess.run(
             ["git", "-C", str(repo), "show", f"{commit[1]}:{model['filename']}"],
@@ -448,11 +465,18 @@ def main():
     parser.add_argument("--head", required=True)
     parser.add_argument("--author", required=True)
     parser.add_argument("--author-id", type=int, required=True)
-    parser.add_argument("--repository", required=True, help="OWNER/REPO of the database")
+    parser.add_argument(
+        "--repository", required=True, help="OWNER/REPO of the database"
+    )
     args = parser.parse_args()
     try:
         summary = check_pull_request(
-            args.repo, args.base, args.head, args.author, args.author_id, args.repository
+            args.repo,
+            args.base,
+            args.head,
+            args.author,
+            args.author_id,
+            args.repository,
         )
     except (ValueError, KeyError, TypeError, subprocess.CalledProcessError) as error:
         print(f"Rejected: {error}")
