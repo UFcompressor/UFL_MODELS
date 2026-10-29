@@ -1,4 +1,8 @@
-"""Compatibility launcher; registration implementation lives in CAESAR."""
+"""Run CAESAR's register_model.py from a UFL_MODELS checkout.
+
+The registration client lives in CAESAR; the checks it and the workflow run live
+here in test/check_registration.py. check and sync default to this database.
+"""
 
 import os
 from pathlib import Path
