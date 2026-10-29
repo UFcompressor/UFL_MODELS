@@ -1,10 +1,9 @@
 # UFL model registry
 
-UFL_MODELS is the authoritative database for CAESAR model registrations.
-Registration code and ownership tests live in [CAESAR](https://github.com/UFcompressor/CAESAR).
-The database stores active and retired identities, checkpoint URLs, and owners.
-Existing checkpoints stay here; new contributors may host commit-pinned checkpoints
-in their own public GitHub repositories.
+UFL_MODELS is the authoritative database for CAESAR model registrations. It stores
+registered checkpoints, their active and retired identities, URLs and owners.
+The registration client lives in [CAESAR](https://github.com/UFcompressor/CAESAR);
+the checks the workflow runs live here in `test/check_registration.py`.
 
 ## Register or retire a model
 
@@ -13,30 +12,39 @@ Use CAESAR's `register_model.py`, after `gh auth login`:
 ```sh
 python3 register_model.py add --name my_model --display-name "My model" \
   --description "Training data and intended use" \
-  --repository YOUR_LOGIN/checkpoints --revision FULL_COMMIT_SHA \
   --checkpoint /path/to/my_model.pt --min-dims 3 --max-dims 5
 python3 register_model.py remove my_model
 ```
 
-Commands open issues in this repository. The trusted workflow validates submissions,
-assigns unused registration numbers, commits the catalog and model list automatically,
-and records ownership from the authenticated issue author's numeric GitHub ID.
-Users can retire only their own models; E53klasky (ID 173562962) is the initial
-administrator and can register or retire any model. Only an administrator may
-change the default using `remove NAME --default-model REPLACEMENT`.
+Each command opens a `[model-registry]` pull request from your fork. `add` commits
+the checkpoint and its catalog entry; `remove` moves your entry to `retired_models`.
+The workflow (`.github/workflows/model-registry.yml`) checks the pull request with
+`test/check_registration.py` from this repository, never with code from the pull
+request, and merges it when every check passes; otherwise it comments the reason.
+It checks that:
 
-Retirement preserves checkpoint files and identities. Numbers, names, hashes, and
-filenames remain reserved. Requests cannot rewrite or revive retired registrations.
-Ordinary contributors need issue access, not repository write access. Direct write
-access to the catalog or workflow bypasses this service; keep it restricted to
-trusted administrators and automation.
+- exactly one model is registered or retired and nothing else changed;
+- the owner is the pull request author's login and numeric GitHub ID, and the
+  registration number is the next unused one; names, files, hashes and numbers
+  are unique among active and retired models;
+- the checkpoint is a real CAESAR model: a PyTorch state_dict of finite float32
+  tensors with the default model's parameter names and shapes, within 5% of its
+  size. It is read as data by a restricted unpickler and never executed;
+- the URL names the pull request commit that adds the checkpoint, the SHA-256
+  matches, and the README model list matches the catalog.
+
+Users can retire only their own models; E53klasky (ID 173562962) is the initial
+administrator and can retire any model. Only an administrator may change the
+default using `remove NAME --default-model REPLACEMENT`. Retirement preserves
+checkpoint files and identities; numbers, names, hashes and filenames remain
+reserved. Contributors need no write access. Direct write access to the catalog,
+checks or workflow bypasses this service; keep it restricted to administrators.
+The workflow merges with merge commits, so keep merge commits allowed.
 
 The compatibility `register_model.py` here forwards to an adjacent CAESAR checkout.
-It contains no registration logic. See
-[CAESAR's setup and usage guide](https://github.com/UFcompressor/CAESAR/blob/main/docs/model_registration.md)
-for activation, pinned code revisions, automatic commit permissions, validation
-limits, retries, and synchronizing CAESAR's release snapshot. The workflow is not
-active until an administrator sets `CAESAR_REGISTRY_REF` to a reviewed CAESAR commit.
+See [CAESAR's registration guide](https://github.com/UFcompressor/CAESAR/blob/master/docs/model_registration.md)
+for repository settings, testing the workflow, and synchronizing CAESAR's release
+snapshot.
 
 ## Database checks
 
@@ -44,10 +52,6 @@ active until an administrator sets `CAESAR_REGISTRY_REF` to a reviewed CAESAR co
 python3 ../CAESAR/register_model.py check --database .
 python3 -m unittest discover -s test -v
 ```
-
-Model byte hashes and strict network compatibility are checked during CAESAR download
-and compilation. Registration checks public checkpoint hashes without executing
-checkpoint code. Hosting must remain available for future downloads.
 
 <!-- BEGIN GENERATED MODEL LIST -->
 

@@ -1,95 +1,113 @@
 name: Model registration
 
-on:
-  issues:
-    types: [opened]
-  workflow_dispatch:
-    inputs:
-      issue:
-        description: Issue number to retry (ownership still comes from the issue author)
-        required: true
+# CAESAR's register_model.py opens a "[model-registry] ..." pull request from the
+# submitter's fork. pull_request_target runs this file and test/ from the base
+# branch, never from the pull request: the request is fetched as git objects and
+# read as data by test/check_registration.py, then merged if every check passes.
 
-permissions:
-  contents: write
-  issues: write
+on:
+  pull_request_target:
+    types: [opened, reopened, synchronize]
+
+permissions: {}
+
+# One run per pull request; a new push supersedes the old check. Do not queue
+# all requests in one group: GitHub keeps one pending run per group and cancels
+# the rest. Requests checked at the same time merge independently, and GitHub
+# refuses a merge that conflicts, as any two registrations or retirements do
+# (both append to the same catalog and README lines).
+concurrency:
+  group: model-registration-${{ github.event.pull_request.number }}
+  cancel-in-progress: true
 
 jobs:
-  register:
-    if: github.event_name == 'workflow_dispatch' || startsWith(github.event.issue.title, '[model-registry] ')
+  check:
+    if: startsWith(github.event.pull_request.title, '[model-registry] ')
     runs-on: ubuntu-latest
-    timeout-minutes: 15
+    timeout-minutes: 10
+    permissions:
+      contents: read
+    outputs:
+      result: ${{ steps.check.outputs.result }}
     steps:
       - uses: actions/checkout@v4
         with:
-          path: database
-          ref: ${{ github.event.repository.default_branch }}
-          fetch-depth: 1
-      - name: Require a pinned, administrator-selected CAESAR revision
+          ref: ${{ github.event.pull_request.base.ref }}
+          fetch-depth: 0
+      - name: Fetch the request without checking it out
         env:
-          REGISTRY_REF: ${{ vars.CAESAR_REGISTRY_REF }}
-        run: '[[ "$REGISTRY_REF" =~ ^[0-9a-f]{40}$ ]] || { echo "Set CAESAR_REGISTRY_REF to the reviewed CAESAR commit SHA"; exit 1; }'
-      - uses: actions/checkout@v4
-        with:
-          repository: UFcompressor/CAESAR
-          ref: ${{ vars.CAESAR_REGISTRY_REF }}
-          path: caesar
-          persist-credentials: false
-      - name: Prepare trusted event
+          PR: ${{ github.event.pull_request.number }}
+        run: git fetch --no-tags origin "refs/pull/$PR/head"
+      - name: Check the request
+        id: check
         env:
-          GH_TOKEN: ${{ github.token }}
-          REQUESTED_ISSUE: ${{ inputs.issue }}
-          EVENT_NAME: ${{ github.event_name }}
+          HEAD_SHA: ${{ github.event.pull_request.head.sha }}
+          AUTHOR: ${{ github.event.pull_request.user.login }}
+          AUTHOR_ID: ${{ github.event.pull_request.user.id }}
+          AUTHOR_TYPE: ${{ github.event.pull_request.user.type }}
+          REPOSITORY: ${{ github.repository }}
         run: |
-          if [[ "$EVENT_NAME" == workflow_dispatch ]]; then
-            [[ "$REQUESTED_ISSUE" =~ ^[1-9][0-9]*$ ]] || exit 1
-            gh api "repos/UFcompressor/UFL_MODELS/issues/$REQUESTED_ISSUE" > issue.json
-            python3 - <<'PY'
-          import json
-          from pathlib import Path
-          issue = json.loads(Path('issue.json').read_text())
-          Path('request-event.json').write_text(json.dumps(dict(
-              action='opened', repository=dict(full_name='UFcompressor/UFL_MODELS'), issue=issue)))
-          PY
+          status=1
+          if [[ "$AUTHOR_TYPE" != User ]]; then
+            echo "Rejected: requests must be opened by a GitHub user" > result.txt
           else
-            cp "$GITHUB_EVENT_PATH" request-event.json
+            python3 test/check_registration.py --base HEAD --head "$HEAD_SHA" \
+              --author "$AUTHOR" --author-id "$AUTHOR_ID" --repository "$REPOSITORY" \
+              > result.txt 2>&1 && status=0 || status=$?
           fi
-          python3 - <<'PY' >> "$GITHUB_ENV"
-          import json
-          from pathlib import Path
-          number = json.loads(Path('request-event.json').read_text())['issue']['number']
-          assert type(number) is int and number > 0
-          print(f'ISSUE_NUMBER={number}')
-          PY
-      - name: Validate and automatically commit
+          cat result.txt
+          delimiter="RESULT_$(openssl rand -hex 16)"
+          { echo "result<<$delimiter"; cat result.txt; echo "$delimiter"; } >> "$GITHUB_OUTPUT"
+          exit "$status"
+
+  merge:
+    needs: check
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    permissions:
+      contents: write
+      pull-requests: write
+    steps:
+      # A merge commit (not squash) keeps the commit named in the checkpoint URL.
+      # --match-head-commit refuses to merge anything pushed after the check.
+      - name: Merge the checked commit
         env:
-          DEFAULT_BRANCH: ${{ github.event.repository.default_branch }}
+          GH_TOKEN: ${{ github.token }}
+          PR: ${{ github.event.pull_request.number }}
+          HEAD_SHA: ${{ github.event.pull_request.head.sha }}
+          REPOSITORY: ${{ github.repository }}
+          RESULT: ${{ needs.check.outputs.result }}
         run: |
-          git -C database config user.name 'github-actions[bot]'
-          git -C database config user.email '41898282+github-actions[bot]@users.noreply.github.com'
           for attempt in 1 2 3 4 5; do
-            # Only the disposable runner checkout is reset. Recompute IDs and
-            # authorization against the latest catalog after concurrent pushes.
-            git -C database fetch origin "$DEFAULT_BRANCH"
-            git -C database reset --hard FETCH_HEAD
-            python3 caesar/register_model.py process-event --database database --event request-event.json
-            python3 caesar/register_model.py check --database database
-            git -C database add -- model_catalog.json README.md
-            if git -C database diff --cached --quiet; then exit 0; fi
-            git -C database commit -m "Process model registry request #$ISSUE_NUMBER"
-            if git -C database push origin "HEAD:refs/heads/$DEFAULT_BRANCH"; then exit 0; fi
+            if gh pr merge "$PR" --repo "$REPOSITORY" --merge --match-head-commit "$HEAD_SHA"; then
+              printf 'Merged automatically.\n\n```\n%s\n```\n' "$RESULT" |
+                gh pr comment "$PR" --repo "$REPOSITORY" --body-file -
+              exit 0
+            fi
+            sleep 10  # GitHub may still be computing mergeability
           done
-          echo 'Could not publish after concurrent updates; retry this issue from Actions.'
           exit 1
-      - name: Report success
-        if: success()
+
+  report:
+    needs: [check, merge]
+    if: always() && (needs.check.result == 'failure' || needs.merge.result == 'failure')
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    permissions:
+      pull-requests: write
+    steps:
+      - name: Explain why the request was not merged
         env:
           GH_TOKEN: ${{ github.token }}
-        run: |
-          gh issue close "$ISSUE_NUMBER" --repo UFcompressor/UFL_MODELS --comment 'Registry request applied. The catalog and model list were committed automatically. Retirement preserves checkpoint identities.'
-      - name: Report failure
-        if: failure() && env.ISSUE_NUMBER != ''
-        env:
-          GH_TOKEN: ${{ github.token }}
+          PR: ${{ github.event.pull_request.number }}
+          REPOSITORY: ${{ github.repository }}
+          RESULT: ${{ needs.check.outputs.result }}
+          CHECK: ${{ needs.check.result }}
           RUN_URL: ${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}
         run: |
-          gh issue comment "$ISSUE_NUMBER" --repo UFcompressor/UFL_MODELS --body "Registry processing failed. See $RUN_URL for validation or publication errors. Correct invalid requests by opening a new request; administrators can retry infrastructure failures from Actions."
+          if [[ "$CHECK" == success ]]; then
+            RESULT="The checks passed, but GitHub could not merge. Usually another request changed the catalog first."
+          fi
+          printf 'Not merged.\n\n```\n%s\n```\n\nLog: %s\n\nTo fix a request, rerun `register_model.py` with the same name: it rebuilds this pull request on the current database and the checks run again. Otherwise close it.\n' \
+            "${RESULT:-The check did not finish; see the log.}" "$RUN_URL" |
+            gh pr comment "$PR" --repo "$REPOSITORY" --body-file -

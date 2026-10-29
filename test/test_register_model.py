@@ -1,4 +1,5 @@
-"""Database invariants; registration implementation tests live in CAESAR."""
+"""Invariants of the committed catalog and policy; see test_check_registration.py
+for the pull request checks."""
 
 import json
 from pathlib import Path
