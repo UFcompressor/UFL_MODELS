@@ -28,7 +28,6 @@ import zipfile
 ARCHITECTURE = "caesar-bcrn-v1"
 LOGIN = r"[A-Za-z0-9](?:[A-Za-z0-9-]{0,37}[A-Za-z0-9])?"
 MAX_CHECKPOINT_BYTES = 100 * 1024 * 1024  # GitHub refuses larger files in a push
-SIZE_TOLERANCE = 0.05  # relative to the default model's checkpoint
 MODEL_KEYS = {
     "name",
     "display_name",
@@ -325,11 +324,6 @@ def read_checkpoint(data):
 
 def check_checkpoint(data, reference):
     """A quick 'is this a real CAESAR model' check against the default model."""
-    if abs(len(data) - len(reference)) > SIZE_TOLERANCE * len(reference):
-        raise ValueError(
-            f"Checkpoint is {len(data):,} bytes; registered models are about "
-            f"{len(reference):,} bytes"
-        )
     shapes, expected = read_checkpoint(data), read_checkpoint(reference)
     missing = sorted(expected.keys() - shapes.keys())
     extra = sorted(shapes.keys() - expected.keys())

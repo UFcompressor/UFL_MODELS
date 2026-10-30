@@ -44,6 +44,17 @@ class ValidationRegressions(unittest.TestCase):
             )
             self.assertEqual(result.returncode, 1, result.stdout + result.stderr)
 
+    def test_archive_size_does_not_define_network_compatibility(self):
+        reference = b"small archive"
+        data = b"larger archive" * 100
+        with patch.object(checker, "read_checkpoint", return_value={"w": (2, 3)}):
+            self.assertEqual(checker.check_checkpoint(data, reference), 1)
+        with patch.object(checker, "read_checkpoint", side_effect=[
+            {"w": (2, 4)}, {"w": (2, 3)}
+        ]):
+            with self.assertRaisesRegex(ValueError, "wrong-shape"):
+                checker.check_checkpoint(data, reference)
+
     def test_invalid_tensor_layouts_are_rejected(self):
         out = io.BytesIO()
         with zipfile.ZipFile(out, "w") as archive:
