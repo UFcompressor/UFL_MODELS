@@ -91,7 +91,9 @@
       "owner": "arsenious",
       "owner_id": 24788213,
       "url": "https://raw.githubusercontent.com/UFcompressor/UFL_MODELS/6e03d1287a15e8bb658394b8aef73407b63d6902/rahul_isabel_tc_v1.pt"
-    },
+    }
+  ],
+  "retired_models": [
     {
       "name": "re3200_bs8_ep100k",
       "display_name": "RE3200 BS8 100K",
