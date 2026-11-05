@@ -91,6 +91,21 @@
       "owner": "arsenious",
       "owner_id": 24788213,
       "url": "https://raw.githubusercontent.com/UFcompressor/UFL_MODELS/6e03d1287a15e8bb658394b8aef73407b63d6902/rahul_isabel_tc_v1.pt"
+    },
+    {
+      "name": "re3200_bs8_ep100k",
+      "display_name": "RE3200 BS8 100K",
+      "description": "CAESAR VAE3D model trained on RE3200 with batch size 8 for 100K iterations",
+      "filename": "model_bs8_ep100k.pt",
+      "sha256": "bfc5e271489c93e6dc353e52369a0c2c3725cd4040dfcd8b9a585fc164a1d3ff",
+      "min_dims": 3,
+      "max_dims": 5,
+      "registration_id": 7,
+      "id": "ufl:7@sha256:bfc5e271489c93e6dc353e52369a0c2c3725cd4040dfcd8b9a585fc164a1d3ff",
+      "architecture": "caesar-bcrn-v1",
+      "owner": "E53klasky",
+      "owner_id": 173562962,
+      "url": "https://raw.githubusercontent.com/UFcompressor/UFL_MODELS/92f818227d779a4c6f425fd116c24e9fa65a1726/model_bs8_ep100k.pt"
     }
   ]
 }
