@@ -25,6 +25,7 @@ import subprocess
 import sys
 import zipfile
 
+MODEL_REMOVAL_ADMIN_ID = 173562962
 ARCHITECTURE = "caesar-bcrn-v1"
 LOGIN = r"[A-Za-z0-9](?:[A-Za-z0-9-]{0,37}[A-Za-z0-9])?"
 MAX_CHECKPOINT_BYTES = 100 * 1024 * 1024  # GitHub refuses larger files in a push
@@ -121,7 +122,7 @@ def model_list(catalog):
     ]
     for status, models in (
         ("Active", catalog["models"]),
-        ("Retired", catalog.get("retired_models", [])),
+        ("Removed", catalog.get("retired_models", [])),
     ):
         for model in sorted(models, key=lambda m: m["registration_id"]):
             state = status
@@ -447,8 +448,8 @@ def check_pull_request(repo, base, head, author, author_id, repository):
         (name,) = removed
         model = next(m for m in old["models"] if m["name"] == name)
         admin = author_id in admins
-        if not admin and model["owner_id"] != author_id:
-            raise ValueError("Only the model owner or an administrator may retire it")
+        if author_id != MODEL_REMOVAL_ADMIN_ID:
+            raise ValueError("Only E53klasky (GitHub ID 173562962) may retire a model")
         replacement = new["default_model"]
         if replacement != old["default_model"] and not admin:
             raise ValueError("Only an administrator may change the default model")
@@ -456,8 +457,10 @@ def check_pull_request(repo, base, head, author, author_id, repository):
             old, name, replacement if replacement != old["default_model"] else None
         ):
             raise ValueError("Retirement may only move the model to retired_models")
-        allowed = {"model_catalog.json", "README.md"}
-        summary = f"retire {name} for {author}"
+        allowed = {"model_catalog.json", "README.md", model["filename"]}
+        if changes.get(model["filename"]) != "D":
+            raise ValueError(f"Removal must delete checkpoint {model['filename']}")
+        summary = f"retire {name} for {author}: checkpoint removed"
     else:
         raise ValueError("A pull request must register or retire exactly one model")
 

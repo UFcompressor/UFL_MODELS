@@ -17,7 +17,8 @@ python3 register_model.py remove my_model
 ```
 
 Each command opens a `[model-registry]` pull request from your fork. `add` commits
-the checkpoint and its catalog entry; `remove` moves your entry to `retired_models`.
+the checkpoint and its catalog entry; `remove` deletes the checkpoint file and moves its entry to `retired_models`
+as registration history.
 The workflow (`.github/workflows/model-registry.yml`) checks the pull request with
 `test/check_registration.py` from this repository, never with code from the pull
 request, and merges it when every check passes; otherwise it comments the reason.
@@ -33,11 +34,13 @@ It checks that:
 - the URL names the pull request commit that adds the checkpoint, the SHA-256
   matches, and the README model list matches the catalog.
 
-Users can retire only their own models; E53klasky (ID 173562962) is the initial
-administrator and can retire any model. Only an administrator may change the
-default using `remove NAME --default-model REPLACEMENT`. Retirement preserves
-checkpoint files and identities; numbers, names, hashes and filenames remain
-reserved. Contributors need no write access. Direct write access to the catalog,
+Only E53klasky (GitHub ID 173562962) may retire models. Model owners and other
+administrators cannot remove them. The stable numeric ID also works after an
+account rename. Only an administrator may change the
+default using `remove NAME --default-model REPLACEMENT`. Removal deletes the checkpoint from the current branch and preserves
+identities; numbers, names, hashes and filenames remain
+reserved. Git history retains older checkpoint versions; removal does not shrink
+the full repository history. Contributors need no write access. Direct write access to the catalog,
 checks or workflow bypasses this service; keep it restricted to administrators.
 The workflow merges with merge commits, so keep merge commits allowed.
 
@@ -63,6 +66,6 @@ python3 -m unittest discover -s test -v
 | 4 | microscopy (microscopy) | E53klasky | Active | microscopy.pt | 3D–5D | Domain-specific microscopy model; trained and tested across four microscopy datasets, with 3D–5D inputs. |
 | 5 | Xcompact3d latent 16x16 (Xcompact3d_latent_16_16) | E53klasky | Active | Xcompact3d_latent_16_16.pt | 3D–5D | Xcompact3d checkpoint; document training data and intended use |
 | 6 | rahul_isabel_tc_v1 (workflow test) (rahul_isabel_tc_v1) | arsenious | Active | rahul_isabel_tc_v1.pt | 3D–5D | Workflow test, not for production. caesar_v2 fine-tuned 3k steps on Hurricane Isabel TCf48 frames 0-79; held-out NRMSE 0.00623. |
-| 7 | RE3200 BS8 100K (re3200_bs8_ep100k) | E53klasky | Retired | model_bs8_ep100k.pt | 3D–5D | CAESAR VAE3D model trained on RE3200 with batch size 8 for 100K iterations |
+| 7 | RE3200 BS8 100K (re3200_bs8_ep100k) | E53klasky | Removed | model_bs8_ep100k.pt | 3D–5D | CAESAR VAE3D model trained on RE3200 with batch size 8 for 100K iterations |
 
 <!-- END GENERATED MODEL LIST -->
