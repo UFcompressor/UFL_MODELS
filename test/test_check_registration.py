@@ -118,6 +118,8 @@ class PullRequestTests(unittest.TestCase):
 
     def retirement(self, branch, name, default_model=None):
         self.git("switch", "--quiet", "-c", branch, "main")
+        model = next(m for m in self.catalog()["models"] if m["name"] == name)
+        (self.repo / model["filename"]).unlink(missing_ok=True)
         self.write(checker.retire(self.catalog(), name, default_model))
         head = self.commit(f"Retire {name}")
         self.git("switch", "--quiet", "main")
@@ -133,7 +135,12 @@ class PullRequestTests(unittest.TestCase):
 
     def test_valid_registration_is_accepted(self):
         summary = self.check(self.request("a"))
-        self.assertIn("register alice_model as ufl:6@sha256:", summary)
+        catalog = self.catalog()
+        number = 1 + max(
+            m["registration_id"]
+            for m in catalog["models"] + catalog.get("retired_models", [])
+        )
+        self.assertIn(f"register alice_model as ufl:{number}@sha256:", summary)
         self.assertIn("329 float32 tensors", summary)
 
     def test_owner_comes_from_the_pull_request_author(self):
@@ -214,19 +221,43 @@ class PullRequestTests(unittest.TestCase):
         with self.assertRaisesRegex(ValueError, "Duplicate sha256"):
             self.check(self.request("c", name="copy"))
 
-    def test_owner_can_retire_and_other_users_cannot(self):
+    def test_removal_must_delete_checkpoint(self):
         self.merge(self.request("a"))
         head = self.retirement("retire", "alice_model")
-        with self.assertRaisesRegex(ValueError, "Only the model owner"):
+        self.git("switch", "--quiet", "retire")
+        (self.repo / "alice_model.pt").write_bytes(variant(self.reference))
+        head = self.commit("Leave checkpoint behind")
+        self.git("switch", "--quiet", "main")
+        with self.assertRaisesRegex(ValueError, "must delete checkpoint"):
+            self.check(head, author=ADMIN)
+
+    def test_only_designated_account_can_retire(self):
+        self.merge(self.request("a"))
+        head = self.retirement("retire", "alice_model")
+        with self.assertRaisesRegex(ValueError, "Only E53klasky"):
             self.check(head, author=BOB)
-        self.assertIn("retire alice_model", self.check(head))
+        with self.assertRaisesRegex(ValueError, "Only E53klasky"):
+            self.check(head)
         self.assertIn("retire alice_model", self.check(head, author=ADMIN))
-        with self.assertRaisesRegex(ValueError, "Only the model owner"):
+        with self.assertRaisesRegex(ValueError, "Only E53klasky"):
             self.check(self.retirement("eels", "eelsM1"))
+
+    def test_other_administrators_cannot_retire(self):
+        policy_path = self.repo / "registry_policy.json"
+        policy = json.loads(policy_path.read_text())
+        policy["admins"].append({"login": BOB[0], "id": BOB[1]})
+        policy_path.write_text(json.dumps(policy))
+        self.commit("Add another administrator")
+        head = self.retirement("retire", "caesar_v2", "caesar_v1")
+        with self.assertRaisesRegex(ValueError, "Only E53klasky"):
+            self.check(head, author=BOB)
+        self.assertIn(
+            "retire caesar_v2", self.check(head, author=("RenamedAdmin", ADMIN[1]))
+        )
 
     def test_default_changes_require_an_administrator(self):
         head = self.retirement("default", "caesar_v2", default_model="caesar_v1")
-        with self.assertRaisesRegex(ValueError, "Only the model owner"):
+        with self.assertRaisesRegex(ValueError, "Only E53klasky"):
             self.check(head)
         self.assertIn("retire caesar_v2", self.check(head, author=ADMIN))
         with self.assertRaisesRegex(ValueError, "requires a replacement default"):
