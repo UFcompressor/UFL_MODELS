@@ -91,6 +91,21 @@
       "owner": "arsenious",
       "owner_id": 24788213,
       "url": "https://raw.githubusercontent.com/UFcompressor/UFL_MODELS/6e03d1287a15e8bb658394b8aef73407b63d6902/rahul_isabel_tc_v1.pt"
+    },
+    {
+      "name": "rahul_hurricane_tc_oneepoch_20261117",
+      "display_name": "Hurricane TC one epoch (workflow test)",
+      "description": "Workflow test only, not for production. caesar_v2 fine-tuned on GTX 1080 for one epoch (5 Adam steps, batch 1, lr 1e-4) using Hurricane Isabel TCf48 crop [40:52,122:378,122:378]; held-out slices [52:60] neural NRMSE 0.00325689. CPU GAE round trip at target 0.001 measured NRMSE 0.000959013, full-file CR 22.22x; foundation CR 24.17x. Eight-frame spatial-slice windows; no demonstrated fine-tuning benefit.",
+      "filename": "hurricane_one_epoch_gpu.pt",
+      "sha256": "41e9e352ead5b4334cb1b16b0c97f56c4317a0de0c44322483609c2789bd36af",
+      "min_dims": 3,
+      "max_dims": 5,
+      "registration_id": 8,
+      "id": "ufl:8@sha256:41e9e352ead5b4334cb1b16b0c97f56c4317a0de0c44322483609c2789bd36af",
+      "architecture": "caesar-bcrn-v1",
+      "owner": "arsenious",
+      "owner_id": 24788213,
+      "url": "https://raw.githubusercontent.com/UFcompressor/UFL_MODELS/7ae61bebad31e36bb58e639e130c4f8069510714/hurricane_one_epoch_gpu.pt"
     }
   ],
   "retired_models": [
