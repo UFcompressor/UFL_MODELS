@@ -106,6 +106,21 @@
       "owner": "arsenious",
       "owner_id": 24788213,
       "url": "https://raw.githubusercontent.com/UFcompressor/UFL_MODELS/7ae61bebad31e36bb58e639e130c4f8069510714/hurricane_one_epoch_gpu.pt"
+    },
+    {
+      "name": "caesar-v3",
+      "display_name": "caesar-v3",
+      "description": "1-3D model trained on UF datasets liangji's last model",
+      "filename": "model_bs64_ep100k_last_UF.pt",
+      "sha256": "858a2535037e144bc711a74f1dc1d12c12f3bb9cf9841f2f9db6520d5f130774",
+      "min_dims": 3,
+      "max_dims": 5,
+      "registration_id": 9,
+      "id": "ufl:9@sha256:858a2535037e144bc711a74f1dc1d12c12f3bb9cf9841f2f9db6520d5f130774",
+      "architecture": "caesar-bcrn-v1",
+      "owner": "E53klasky",
+      "owner_id": 173562962,
+      "url": "https://raw.githubusercontent.com/UFcompressor/UFL_MODELS/9d82b45e01a3c9af7915111aa67801ab881e3591/model_bs64_ep100k_last_UF.pt"
     }
   ],
   "retired_models": [
