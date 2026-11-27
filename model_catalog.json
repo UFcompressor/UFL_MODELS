@@ -121,6 +121,21 @@
       "owner": "E53klasky",
       "owner_id": 173562962,
       "url": "https://raw.githubusercontent.com/UFcompressor/UFL_MODELS/9d82b45e01a3c9af7915111aa67801ab881e3591/model_bs64_ep100k_last_UF.pt"
+    },
+    {
+      "name": "model_bs120_ep100k",
+      "display_name": "Xcompact3D-large-TGV-RE3200",
+      "description": "Xcomapct3D fine tune 1025^3 mesh TGV case RE=3200 DNS simualtion ",
+      "filename": "model_bs120_ep100k.pt",
+      "sha256": "3a7755fdfaba0c5b0c8ce3a6f485af697d3976dd03de691e3858516e2654b8cc",
+      "min_dims": 3,
+      "max_dims": 5,
+      "registration_id": 10,
+      "id": "ufl:10@sha256:3a7755fdfaba0c5b0c8ce3a6f485af697d3976dd03de691e3858516e2654b8cc",
+      "architecture": "caesar-bcrn-v1",
+      "owner": "E53klasky",
+      "owner_id": 173562962,
+      "url": "https://raw.githubusercontent.com/UFcompressor/UFL_MODELS/bdb1b1c509a2ca81e65f57927d9f8134239d8828/model_bs120_ep100k.pt"
     }
   ],
   "retired_models": [
